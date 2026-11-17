@@ -18,9 +18,16 @@ pipeline {
                         --volumes-from jenkins \
                         zricethezav/gitleaks:latest detect \
                         --source="${WORKSPACE}" \
+                        --report-path="${WORKSPACE}/gitleaks-report.json" \
+                        --report-format=json \
                         --verbose \
                         --no-git
                 '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'gitleaks-report.json', allowEmptyArchive: true
+                }
             }
         }
 
