@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // DefectDojo credentials configured in Jenkins Credentials Manager
+        // DefectDojo credentials configured in Jenkins Credentials Managers
         DEFECTDOJO_URL   = credentials('dojourl')
         DEFECTDOJO_TOKEN = credentials('dojotoken')
     }
@@ -49,10 +49,11 @@ pipeline {
                             -H "Content-Type: multipart/form-data" \
                             -F "scan_type=Gitleaks Scan" \
                             -F "file=@${WORKSPACE}/gitleaks-report.json" \
-                            -F "product_name=user-service" \
+                            -F "product_name=vulnerability" \
                             -F "engagement_name=DevSecOps-CI" \
                             -F "auto_create_context=true" \
-                            -F "close_old_findings=true")
+                            -F "close_old_findings=true"
+                            -F "product_type_name=Research and Development")
 
                         HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
                         BODY=$(echo "$RESPONSE" | sed '$d')
