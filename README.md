@@ -96,9 +96,7 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-# WARNING: Dummy credentials for testing Gitleaks pipeline detection
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7dsfeqrvwe
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYsfvwrvf wr
+
 
 
 
