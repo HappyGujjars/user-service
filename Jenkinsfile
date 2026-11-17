@@ -52,7 +52,7 @@ pipeline {
                             -F "product_name=vulnerability" \
                             -F "engagement_name=DevSecOps-CI" \
                             -F "auto_create_context=true" \
-                            -F "close_old_findings=true"
+                            -F "close_old_findings=true" \
                             -F "product_type_name=Research and Development")
 
                         HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
