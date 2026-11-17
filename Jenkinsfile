@@ -10,7 +10,20 @@ pipeline {
             }
         }
 
-        
+        stage('Gitleaks Secret Scan') {
+            steps {
+                echo "Running Gitleaks secret detection..."
+                sh '''
+                    docker run --rm \
+                        --volumes-from jenkins \
+                        zricethezav/gitleaks:latest detect \
+                        --source="${WORKSPACE}" \
+                        --verbose \
+                        --no-git
+                '''
+            }
+        }
+
     }
 
     post {
