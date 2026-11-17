@@ -58,7 +58,7 @@ pipeline {
                         BODY=$(echo "$RESPONSE" | sed '$d')
 
                         echo "DefectDojo Response: $BODY"
-                        if [[ "$HTTP_CODE" =~ ^(200|201)$ ]]; then
+                        if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
                             echo "✅ Report uploaded to DefectDojo successfully (HTTP $HTTP_CODE)!"
                         else
                             echo "❌ Failed to upload to DefectDojo. HTTP Status: $HTTP_CODE"
