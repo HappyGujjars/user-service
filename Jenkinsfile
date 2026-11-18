@@ -159,32 +159,37 @@ pipeline {
         stage('Security Report Aggregation') {
             steps {
                 echo "Aggregating and deduplicating security reports using containerized Python..."
-                sh '''
-                    BUILD_OUTCOME="${currentBuild.result ?: 'SUCCESS'}"
-                    docker run --rm \
-                        --volumes-from jenkins \
-                        -w "${WORKSPACE}" \
-                        python:3.11-alpine \
-                        python3 security-report-generator/src/main.py \
-                            --gitleaks "${WORKSPACE}/reports/gitleaks.json" \
-                            --trivy-fs "${WORKSPACE}/reports/trivy-fs.json" \
-                            --trivy-image "${WORKSPACE}/reports/trivy-image.json" \
-                            --sonar "${WORKSPACE}/reports/sonar.json" \
-                            --owners security-report-generator/config/owners.yaml \
-                            --project "${PROJECT_NAME}" \
-                            --service "${SERVICE_NAME}" \
-                            --branch "${BRANCH_NAME:-stage}" \
-                            --commit "${GIT_COMMIT:-HEAD}" \
-                            --build-num "${BUILD_NUMBER}" \
-                            --triggered-by "${BUILD_USER_ID:-CI}" \
-                            --build-status "${BUILD_OUTCOME}" \
-                            --jenkins-url "${BUILD_URL}" \
-                            --sonarqube-url "${SONAR_URL}" \
-                            --defectdojo-url "${DEFECTDOJO_URL}" \
-                            --output-html "${WORKSPACE}/reports/security-report.html" \
-                            --output-json "${WORKSPACE}/reports/combined-findings.json" \
-                            --output-summary "${WORKSPACE}/reports/notification-summary.json"
-                '''
+                script {
+                    def buildStatus = currentBuild.result ?: 'SUCCESS'
+                    def branchName = env.BRANCH_NAME ?: 'stage'
+                    def gitCommit = env.GIT_COMMIT ?: 'HEAD'
+                    def buildUser = env.BUILD_USER_ID ?: 'CI'
+                    sh """
+                        docker run --rm \\
+                            --volumes-from jenkins \\
+                            -w "${env.WORKSPACE}" \\
+                            python:3.11-alpine \\
+                            python3 security-report-generator/src/main.py \\
+                                --gitleaks "${env.WORKSPACE}/reports/gitleaks.json" \\
+                                --trivy-fs "${env.WORKSPACE}/reports/trivy-fs.json" \\
+                                --trivy-image "${env.WORKSPACE}/reports/trivy-image.json" \\
+                                --sonar "${env.WORKSPACE}/reports/sonar.json" \\
+                                --owners security-report-generator/config/owners.yaml \\
+                                --project "${PROJECT_NAME}" \\
+                                --service "${SERVICE_NAME}" \\
+                                --branch "${branchName}" \\
+                                --commit "${gitCommit}" \\
+                                --build-num "${BUILD_NUMBER}" \\
+                                --triggered-by "${buildUser}" \\
+                                --build-status "${buildStatus}" \\
+                                --jenkins-url "${BUILD_URL}" \\
+                                --sonarqube-url "${SONAR_URL}" \\
+                                --defectdojo-url "${DEFECTDOJO_URL}" \\
+                                --output-html "${env.WORKSPACE}/reports/security-report.html" \\
+                                --output-json "${env.WORKSPACE}/reports/combined-findings.json" \\
+                                --output-summary "${env.WORKSPACE}/reports/notification-summary.json"
+                    """
+                }
             }
             post {
                 always {
@@ -257,32 +262,26 @@ pipeline {
 
         stage('Security Gate Evaluation') {
             steps {
-                echo "Enforcing Security Gate & Build policy..."
-                sh '''
-                    GATE_FAILED=0
+                script {
+                    echo "Enforcing Security Gate & Build policy..."
+                    def isFailed = (currentBuild.result == 'FAILURE')
+                    def summaryFile = "${WORKSPACE}/reports/notification-summary.json"
 
-                    # 1. Check if compilation / build failed
-                    if [ "${currentBuild.result}" = "FAILURE" ]; then
-                        echo "❌ BUILD FAILED: Application compilation or docker build failed!"
-                        GATE_FAILED=1
-                    fi
-
-                    # 2. Check security gate status from summary
-                    if [ -f "${WORKSPACE}/reports/notification-summary.json" ]; then
-                        if grep -q '"gate_passed": true' "${WORKSPACE}/reports/notification-summary.json"; then
+                    if (fileExists(summaryFile)) {
+                        def summaryText = readFile(summaryFile)
+                        if (summaryText.contains('"gate_passed": false')) {
+                            echo "❌ SECURITY GATE FAILED: Critical vulnerabilities detected!"
+                            isFailed = true
+                        } else {
                             echo "✅ SECURITY GATE PASSED: All security checks cleared."
-                        else
-                            echo "❌ SECURITY GATE FAILED: Critical security vulnerabilities detected!"
-                            GATE_FAILED=1
-                        fi
-                    fi
+                        }
+                    }
 
-                    # If either compilation or security failed, stop pipeline before deployment
-                    if [ "$GATE_FAILED" -ne 0 ]; then
-                        echo "Deployment halted by security & build policy."
-                        exit 1
-                    fi
-                '''
+                    if (isFailed) {
+                        currentBuild.result = 'FAILURE'
+                        error("❌ Build and deployment halted by security & build policy.")
+                    }
+                }
             }
         }
 
