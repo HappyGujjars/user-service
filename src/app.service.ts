@@ -25,8 +25,11 @@ export class AppService {
     return eval(input);
   }
 
-  // 4. Security Hotspot: Insecure Pseudo-Random Number Generator (CWE-330 / S2245)
-  generateInsecureToken(): number {
-    return Math.random();
+  // 4. Bug: Comparing directly against NaN
+  checkValue(value: number): boolean {
+    if (value === NaN) {
+      return false;
+    }
+    return true;
   }
 }
