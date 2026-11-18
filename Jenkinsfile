@@ -29,15 +29,17 @@ pipeline {
 
         stage('Dependencies & Unit Tests') {
             steps {
-                sh '''
-                    if command -v npm >/dev/null 2>&1; then
-                        echo "Executing local npm install and tests..."
-                        npm install --silent || true
-                        npm test -- --passWithNoTests || true
-                    else
-                        echo "npm not present on Jenkins host; container build handles dependencies."
-                    fi
-                '''
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    sh '''
+                        if command -v npm >/dev/null 2>&1; then
+                            echo "Executing local npm install and tests..."
+                            npm install --silent || true
+                            npm test -- --passWithNoTests
+                        else
+                            echo "npm not present on Jenkins host; container build handles dependencies."
+                        fi
+                    '''
+                }
             }
         }
 
@@ -119,26 +121,32 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "Building container image ${IMAGE_NAME}:${BUILD_NUMBER}..."
-                sh '''
-                    if [ -f "Dockerfile" ]; then
-                        docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
-                        docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest || true
-                    fi
-                '''
+                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                    sh '''
+                        if [ -f "Dockerfile" ]; then
+                            docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
+                            docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest || true
+                        fi
+                    '''
+                }
             }
         }
 
         stage('Trivy Container Image Scan') {
             steps {
-                echo "Scanning container image ${IMAGE_NAME}:${BUILD_NUMBER} with Trivy..."
                 sh '''
-                    docker run --rm \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        --volumes-from jenkins \
-                        aquasec/trivy:latest image \
-                        --format json \
-                        --output "${WORKSPACE}/reports/trivy-image.json" \
-                        ${IMAGE_NAME}:${BUILD_NUMBER} || true
+                    if docker image inspect ${IMAGE_NAME}:${BUILD_NUMBER} >/dev/null 2>&1; then
+                        echo "Scanning container image ${IMAGE_NAME}:${BUILD_NUMBER} with Trivy..."
+                        docker run --rm \
+                            -v /var/run/docker.sock:/var/run/docker.sock \
+                            --volumes-from jenkins \
+                            aquasec/trivy:latest image \
+                            --format json \
+                            --output "${WORKSPACE}/reports/trivy-image.json" \
+                            ${IMAGE_NAME}:${BUILD_NUMBER} || true
+                    else
+                        echo "⚠️ Skipping image scan: ${IMAGE_NAME}:${BUILD_NUMBER} was not built due to compilation failure."
+                    fi
                 '''
             }
             post {
@@ -152,6 +160,7 @@ pipeline {
             steps {
                 echo "Aggregating and deduplicating security reports using containerized Python..."
                 sh '''
+                    BUILD_OUTCOME="${currentBuild.result ?: 'SUCCESS'}"
                     docker run --rm \
                         --volumes-from jenkins \
                         -w "${WORKSPACE}" \
@@ -168,7 +177,7 @@ pipeline {
                             --commit "${GIT_COMMIT:-HEAD}" \
                             --build-num "${BUILD_NUMBER}" \
                             --triggered-by "${BUILD_USER_ID:-CI}" \
-                            --build-status "RUNNING" \
+                            --build-status "${BUILD_OUTCOME}" \
                             --jenkins-url "${BUILD_URL}" \
                             --sonarqube-url "${SONAR_URL}" \
                             --defectdojo-url "${DEFECTDOJO_URL}" \
@@ -186,7 +195,7 @@ pipeline {
 
         stage('DefectDojo Import') {
             steps {
-                echo "Pushing normalized scanner findings to DefectDojo..."
+                echo "Pushing available scanner findings to DefectDojo..."
                 sh '''
                     DOJO_BASE_URL="${DEFECTDOJO_URL%/}"
                     PRODUCT_NAME="${PROJECT_NAME}-${SERVICE_NAME}"
@@ -224,7 +233,7 @@ pipeline {
                     # 3. Trivy Filesystem
                     upload_to_dojo "${WORKSPACE}/reports/trivy-fs.json" "Trivy Scan"
 
-                    # 4. Trivy Container Image
+                    # 4. Trivy Container Image (if built)
                     upload_to_dojo "${WORKSPACE}/reports/trivy-image.json" "Trivy Scan"
                 '''
             }
@@ -235,9 +244,12 @@ pipeline {
                 echo "Evaluating notification routing..."
                 sh '''
                     if [ -f "${WORKSPACE}/reports/notification-summary.json" ]; then
-                        echo "--- SECURITY GATE NOTIFICATION SUMMARY ---"
+                        echo "=========================================="
+                        echo "   SECURITY & BUILD NOTIFICATION SUMMARY  "
+                        echo "=========================================="
                         cat "${WORKSPACE}/reports/notification-summary.json"
-                        echo "------------------------------------------"
+                        echo ""
+                        echo "=========================================="
                     fi
                 '''
             }
@@ -245,18 +257,30 @@ pipeline {
 
         stage('Security Gate Evaluation') {
             steps {
-                echo "Enforcing Security Gate policy..."
+                echo "Enforcing Security Gate & Build policy..."
                 sh '''
+                    GATE_FAILED=0
+
+                    # 1. Check if compilation / build failed
+                    if [ "${currentBuild.result}" = "FAILURE" ]; then
+                        echo "❌ BUILD FAILED: Application compilation or docker build failed!"
+                        GATE_FAILED=1
+                    fi
+
+                    # 2. Check security gate status from summary
                     if [ -f "${WORKSPACE}/reports/notification-summary.json" ]; then
                         if grep -q '"gate_passed": true' "${WORKSPACE}/reports/notification-summary.json"; then
                             echo "✅ SECURITY GATE PASSED: All security checks cleared."
                         else
-                            echo "❌ SECURITY GATE FAILED: Critical vulnerabilities detected!"
-                            echo "Build blocked by security policy. Deployment halted."
-                            exit 1
+                            echo "❌ SECURITY GATE FAILED: Critical security vulnerabilities detected!"
+                            GATE_FAILED=1
                         fi
-                    else
-                        echo "⚠️ Notification summary not found, passing gate check."
+                    fi
+
+                    # If either compilation or security failed, stop pipeline before deployment
+                    if [ "$GATE_FAILED" -ne 0 ]; then
+                        echo "Deployment halted by security & build policy."
+                        exit 1
                     fi
                 '''
             }
@@ -264,7 +288,10 @@ pipeline {
 
         stage('Deploy to Staging') {
             when {
-                branch 'stage'
+                allOf {
+                    branch 'stage'
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                }
             }
             steps {
                 echo "Deploying ${IMAGE_NAME}:${BUILD_NUMBER} to Staging Environment..."
@@ -274,7 +301,10 @@ pipeline {
 
         stage('Production Approval') {
             when {
-                branch 'main'
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                }
             }
             steps {
                 timeout(time: 24, unit: 'HOURS') {
@@ -285,7 +315,10 @@ pipeline {
 
         stage('Deploy to Production') {
             when {
-                branch 'main'
+                allOf {
+                    branch 'main'
+                    expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+                }
             }
             steps {
                 echo "Deploying ${IMAGE_NAME}:${BUILD_NUMBER} to Production Environment..."
@@ -297,13 +330,13 @@ pipeline {
 
     post {
         always {
-            echo "CI/CD Pipeline Completed for ${PROJECT_NAME}-${SERVICE_NAME} build #${BUILD_NUMBER}"
+            echo "CI/CD Pipeline Execution Finished for ${PROJECT_NAME}-${SERVICE_NAME} build #${BUILD_NUMBER}"
         }
         success {
             echo "🎉 Pipeline execution completed successfully."
         }
         failure {
-            echo "❌ Pipeline failed. Review security reports and build logs."
+            echo "❌ Pipeline execution completed with failures. Review security report artifact and build logs."
         }
     }
 }
