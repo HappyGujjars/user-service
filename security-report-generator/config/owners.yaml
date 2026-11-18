@@ -1,0 +1,29 @@
+project: critical
+
+escalation:
+  email:
+    - security-lead@company.com
+    - devops-oncall@company.com
+
+services:
+  frontend:
+    repository: critical-frontend
+    developers:
+      - frontendDevA
+      - frontendDevB
+    email:
+      - frontendDevA@company.com
+      - frontendDevB@company.com
+    chat: frontend-team-chat
+    sonar_project: critical-frontend
+
+  backend:
+    repository: critical-backend
+    developers:
+      - backendDevA
+      - backendDevB
+    email:
+      - backendDevA@company.com
+      - backendDevB@company.com
+    chat: backend-team-chat
+    sonar_project: critical-backend
