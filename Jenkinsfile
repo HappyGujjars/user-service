@@ -11,9 +11,6 @@ pipeline {
         DEFECTDOJO_TOKEN = credentials('dojotoken')
         SONAR_URL        = credentials('sonarurl')
         SONAR_TOKEN      = credentials('sonartoken')
-
-        // Optional Chat Notification Webhook (if configured)
-        // CHAT_WEBHOOK     = credentials('google-chat-webhook-backend')
     }
 
     stages {
@@ -21,29 +18,24 @@ pipeline {
         stage('Prepare Workspace & Directories') {
             steps {
                 sh '''
-                    mkdir -p reports
+                    # Clean previous report artifacts to avoid Gitleaks false positives on old reports
+                    rm -f ${WORKSPACE}/gitleaks-report.json ${WORKSPACE}/sonar-report.json
+                    rm -rf ${WORKSPACE}/reports
+                    mkdir -p ${WORKSPACE}/reports
                     echo "Preparing workspace for ${PROJECT_NAME}-${SERVICE_NAME} build #${BUILD_NUMBER}"
                 '''
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Dependencies & Unit Tests') {
             steps {
-                echo "Installing project dependencies..."
                 sh '''
-                    if [ -f "package.json" ]; then
+                    if command -v npm >/dev/null 2>&1; then
+                        echo "Executing local npm install and tests..."
                         npm install --silent || true
-                    fi
-                '''
-            }
-        }
-
-        stage('Unit Tests') {
-            steps {
-                echo "Executing unit tests..."
-                sh '''
-                    if [ -f "package.json" ]; then
                         npm test -- --passWithNoTests || true
+                    else
+                        echo "npm not present on Jenkins host; container build handles dependencies."
                     fi
                 '''
             }
@@ -124,23 +116,12 @@ pipeline {
             }
         }
 
-        stage('Build Application') {
-            steps {
-                echo "Building application artifacts..."
-                sh '''
-                    if [ -f "package.json" ]; then
-                        npm run build || true
-                    fi
-                '''
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 echo "Building container image ${IMAGE_NAME}:${BUILD_NUMBER}..."
                 sh '''
                     if [ -f "Dockerfile" ]; then
-                        docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} . || true
+                        docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} .
                         docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest || true
                     fi
                 '''
@@ -169,27 +150,31 @@ pipeline {
 
         stage('Security Report Aggregation') {
             steps {
-                echo "Aggregating and deduplicating security reports..."
+                echo "Aggregating and deduplicating security reports using containerized Python..."
                 sh '''
-                    python3 security-report-generator/src/main.py \
-                        --gitleaks "${WORKSPACE}/reports/gitleaks.json" \
-                        --trivy-fs "${WORKSPACE}/reports/trivy-fs.json" \
-                        --trivy-image "${WORKSPACE}/reports/trivy-image.json" \
-                        --sonar "${WORKSPACE}/reports/sonar.json" \
-                        --owners security-report-generator/config/owners.yaml \
-                        --project "${PROJECT_NAME}" \
-                        --service "${SERVICE_NAME}" \
-                        --branch "${BRANCH_NAME:-stage}" \
-                        --commit "${GIT_COMMIT:-HEAD}" \
-                        --build-num "${BUILD_NUMBER}" \
-                        --triggered-by "${BUILD_USER_ID:-CI}" \
-                        --build-status "RUNNING" \
-                        --jenkins-url "${BUILD_URL}" \
-                        --sonarqube-url "${SONAR_URL}" \
-                        --defectdojo-url "${DEFECTDOJO_URL}" \
-                        --output-html "${WORKSPACE}/reports/security-report.html" \
-                        --output-json "${WORKSPACE}/reports/combined-findings.json" \
-                        --output-summary "${WORKSPACE}/reports/notification-summary.json"
+                    docker run --rm \
+                        --volumes-from jenkins \
+                        -w "${WORKSPACE}" \
+                        python:3.11-alpine \
+                        python3 security-report-generator/src/main.py \
+                            --gitleaks "${WORKSPACE}/reports/gitleaks.json" \
+                            --trivy-fs "${WORKSPACE}/reports/trivy-fs.json" \
+                            --trivy-image "${WORKSPACE}/reports/trivy-image.json" \
+                            --sonar "${WORKSPACE}/reports/sonar.json" \
+                            --owners security-report-generator/config/owners.yaml \
+                            --project "${PROJECT_NAME}" \
+                            --service "${SERVICE_NAME}" \
+                            --branch "${BRANCH_NAME:-stage}" \
+                            --commit "${GIT_COMMIT:-HEAD}" \
+                            --build-num "${BUILD_NUMBER}" \
+                            --triggered-by "${BUILD_USER_ID:-CI}" \
+                            --build-status "RUNNING" \
+                            --jenkins-url "${BUILD_URL}" \
+                            --sonarqube-url "${SONAR_URL}" \
+                            --defectdojo-url "${DEFECTDOJO_URL}" \
+                            --output-html "${WORKSPACE}/reports/security-report.html" \
+                            --output-json "${WORKSPACE}/reports/combined-findings.json" \
+                            --output-summary "${WORKSPACE}/reports/notification-summary.json"
                 '''
             }
             post {
@@ -262,20 +247,17 @@ pipeline {
             steps {
                 echo "Enforcing Security Gate policy..."
                 sh '''
-                    python3 -c '
-import json, sys
-try:
-    with open("reports/notification-summary.json") as f:
-        data = json.load(f)
-    if not data.get("gate_passed", False):
-        print(f"❌ SECURITY GATE FAILED: {data.get(\"critical_count\", 0)} Critical vulnerabilities detected!")
-        print("Build blocked by security policy. Deployment halted.")
-        sys.exit(1)
-    else:
-        print("✅ SECURITY GATE PASSED: All security checks cleared.")
-except Exception as e:
-    print(f"Warning: Security gate check exception: {e}")
-'
+                    if [ -f "${WORKSPACE}/reports/notification-summary.json" ]; then
+                        if grep -q '"gate_passed": true' "${WORKSPACE}/reports/notification-summary.json"; then
+                            echo "✅ SECURITY GATE PASSED: All security checks cleared."
+                        else
+                            echo "❌ SECURITY GATE FAILED: Critical vulnerabilities detected!"
+                            echo "Build blocked by security policy. Deployment halted."
+                            exit 1
+                        fi
+                    else
+                        echo "⚠️ Notification summary not found, passing gate check."
+                    fi
                 '''
             }
         }
@@ -286,7 +268,6 @@ except Exception as e:
             }
             steps {
                 echo "Deploying ${IMAGE_NAME}:${BUILD_NUMBER} to Staging Environment..."
-                // Deployment steps here (e.g. helm, kubectl, or docker-compose)
                 sh 'echo "Deployment to Staging Successful."'
             }
         }
@@ -308,7 +289,6 @@ except Exception as e:
             }
             steps {
                 echo "Deploying ${IMAGE_NAME}:${BUILD_NUMBER} to Production Environment..."
-                // Production deployment steps
                 sh 'echo "Deployment to Production Successful."'
             }
         }
