@@ -24,6 +24,7 @@ try:
     from .normalizer import normalize_all_scans
     from .report_generator import generate_html_report
     from .notification_summary import generate_notification_summary
+    from .dojo_exporter import export_dojo_generic
 except (ImportError, ValueError):
     from models import ReportMetadata
     from utils.file_reader import (
@@ -36,6 +37,7 @@ except (ImportError, ValueError):
     from normalizer import normalize_all_scans
     from report_generator import generate_html_report
     from notification_summary import generate_notification_summary
+    from dojo_exporter import export_dojo_generic
 
 
 def parse_args():
@@ -126,13 +128,20 @@ def main():
     # Render HTML Report
     html_report_str = generate_html_report(aggregated_report)
 
+    # Export DefectDojo Generic Findings Import format (deduplicated, normalized)
+    dojo_generic = export_dojo_generic(aggregated_report)
+
     # Write Outputs
     write_text_file(args.output_html, html_report_str)
     write_json_file(args.output_json, aggregated_report.to_dict())
     write_json_file(args.output_summary, notification_data)
 
-    # Write separate chat payload and email body for pipeline integrations
+    # Write DefectDojo aggregated export
     summary_dir = os.path.dirname(os.path.abspath(args.output_summary))
+    dojo_export_path = os.path.join(summary_dir, "dojo-generic.json")
+    write_json_file(dojo_export_path, dojo_generic)
+
+    # Write separate chat payload and email body for pipeline integrations
     if "chat_payload" in notification_data:
         write_json_file(os.path.join(summary_dir, "chat-payload.json"), notification_data["chat_payload"])
     if "email_body" in notification_data:
@@ -140,6 +149,7 @@ def main():
 
     logger.info(f"Generated unified HTML report at: {args.output_html}")
     logger.info(f"Generated combined JSON report at: {args.output_json}")
+    logger.info(f"Generated DefectDojo Generic export at: {dojo_export_path}")
     logger.info(f"Generated notification summary at: {args.output_summary}")
     logger.info(f"Generated chat payload at: {os.path.join(summary_dir, 'chat-payload.json')}")
 

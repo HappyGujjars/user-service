@@ -194,66 +194,66 @@ pipeline {
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'reports/security-report.html,reports/combined-findings.json,reports/notification-summary.json,reports/chat-payload.json', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/security-report.html,reports/combined-findings.json,reports/notification-summary.json,reports/chat-payload.json,reports/dojo-generic.json', allowEmptyArchive: true
                 }
             }
         }
 
         stage('DefectDojo Import') {
             steps {
-                echo "Pushing available scanner findings to DefectDojo..."
+                echo "Pushing deduplicated aggregated findings to DefectDojo (Generic Findings Import)..."
                 sh '''
                     DOJO_BASE_URL="${DEFECTDOJO_URL%/}"
+                    DOJO_FILE="${WORKSPACE}/reports/dojo-generic.json"
                     PRODUCT_NAME="${PROJECT_NAME}-${SERVICE_NAME}"
                     ENGAGEMENT_NAME="CI/CD"
 
-                    upload_to_dojo() {
-                        SCAN_FILE="$1"
-                        SCAN_TYPE="$2"
-                        if [ -f "$SCAN_FILE" ] && [ -s "$SCAN_FILE" ]; then
-                            echo "Uploading $SCAN_TYPE ($SCAN_FILE) to DefectDojo..."
-                            RES=$(curl -s -w "\\n%{http_code}" -X POST "${DOJO_BASE_URL}/api/v2/import-scan/" \
-                                -H "Authorization: Token ${DEFECTDOJO_TOKEN}" \
-                                -H "accept: application/json" \
-                                -H "Content-Type: multipart/form-data" \
-                                -F "scan_type=${SCAN_TYPE}" \
-                                -F "file=@${SCAN_FILE}" \
-                                -F "product_name=${PRODUCT_NAME}" \
-                                -F "engagement_name=${ENGAGEMENT_NAME}" \
-                                -F "auto_create_context=true" \
-                                -F "close_old_findings=true" \
-                                -F "product_type_name=Research and Development")
-                            HTTP_STATUS=$(echo "$RES" | tail -n1)
-                            echo "DefectDojo ($SCAN_TYPE) response status: $HTTP_STATUS"
+                    if [ -f "$DOJO_FILE" ] && [ -s "$DOJO_FILE" ]; then
+                        echo "Uploading aggregated report ($DOJO_FILE) to DefectDojo as Generic Findings Import..."
+                        RES=$(curl -s -w "\\n%{http_code}" -X POST "${DOJO_BASE_URL}/api/v2/import-scan/" \
+                            -H "Authorization: Token ${DEFECTDOJO_TOKEN}" \
+                            -H "accept: application/json" \
+                            -H "Content-Type: multipart/form-data" \
+                            -F "scan_type=Generic Findings Import" \
+                            -F "file=@${DOJO_FILE}" \
+                            -F "product_name=${PRODUCT_NAME}" \
+                            -F "engagement_name=${ENGAGEMENT_NAME}" \
+                            -F "auto_create_context=true" \
+                            -F "close_old_findings=true" \
+                            -F "deduplication_on_engagement=true" \
+                            -F "product_type_name=Research and Development")
+                        HTTP_STATUS=$(echo "$RES" | tail -n1)
+                        BODY=$(echo "$RES" | sed '$d')
+                        echo "DefectDojo response status: $HTTP_STATUS"
+                        if [ "$HTTP_STATUS" = "201" ]; then
+                            echo "✅ Aggregated findings uploaded successfully to DefectDojo."
                         else
-                            echo "Skipping $SCAN_TYPE: report file not found or empty."
+                            echo "⚠️ DefectDojo upload returned status: $HTTP_STATUS"
+                            echo "$BODY"
                         fi
-                    }
+                    else
+                        echo "⚠️ Skipping DefectDojo import: dojo-generic.json not found or empty."
+                    fi
 
-                    # 1. Gitleaks
-                    upload_to_dojo "${WORKSPACE}/reports/gitleaks.json" "Gitleaks Scan"
-
-                    # 2. SonarQube
-                    upload_to_dojo "${WORKSPACE}/reports/sonar.json" "SonarQube Scan"
-
-                    # 3. Trivy Filesystem
-                    upload_to_dojo "${WORKSPACE}/reports/trivy-fs.json" "Trivy Scan"
-
-                    # 4. Trivy Container Image (if built)
-                    upload_to_dojo "${WORKSPACE}/reports/trivy-image.json" "Trivy Scan"
-
-                    # 5. Add Engagement Summary Note to DefectDojo
+                    # Post build summary note to DefectDojo engagement
                     if [ -f "${WORKSPACE}/reports/notification-summary.json" ]; then
                         echo "Posting build summary note to DefectDojo engagement..."
                         CRIT=$(grep -o '"critical_count": *[0-9]*' "${WORKSPACE}/reports/notification-summary.json" | grep -o '[0-9]*' || echo '0')
                         TOT=$(grep -o '"total_unique": *[0-9]*' "${WORKSPACE}/reports/notification-summary.json" | grep -o '[0-9]*' || echo '0')
-                        NOTE_TEXT="Build #${BUILD_NUMBER} (${BRANCH_NAME:-stage}) Security Gate Evaluated. Critical: ${CRIT}, Total Unique Findings: ${TOT}. Jenkins Report: ${BUILD_URL}artifact/reports/security-report.html"
+                        GATE=$(grep -o '"gate_status": *"[^"]*"' "${WORKSPACE}/reports/notification-summary.json" | grep -o '"[^"]*"$' | tr -d '"' || echo 'UNKNOWN')
+                        NOTE_TEXT="Build #${BUILD_NUMBER} (${BRANCH_NAME:-stage}) | Gate: ${GATE} | Critical: ${CRIT} | Total Unique: ${TOT} | Jenkins: ${BUILD_URL}artifact/reports/security-report.html"
                         curl -s -X POST "${DOJO_BASE_URL}/api/v2/engagements/2/notes/" \
                             -H "Authorization: Token ${DEFECTDOJO_TOKEN}" \
                             -H "Content-Type: application/json" \
-                            -d "{\"entry\": \"${NOTE_TEXT}\"}" || true
+                            -d "{\"entry\": \"${NOTE_TEXT}\"}" > /dev/null || true
+                        echo "✅ Engagement note posted."
                     fi
                 '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'reports/dojo-generic.json', allowEmptyArchive: true
+                }
             }
         }
 
