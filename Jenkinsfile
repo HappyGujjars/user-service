@@ -1,6 +1,17 @@
 pipeline {
     agent any
 
+    options {
+        buildDiscarder(logRotator(
+            numToKeepStr: '15',
+            daysToKeepStr: '7',
+            artifactNumToKeepStr: '7',
+            artifactDaysToKeepStr: '3'
+        ))
+        disableConcurrentBuilds()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
     environment {
         PROJECT_NAME     = 'critical'
         SERVICE_NAME     = 'backend'
@@ -58,11 +69,6 @@ pipeline {
                         --no-git || true
                 '''
             }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/gitleaks.json', allowEmptyArchive: true
-                }
-            }
         }
 
         stage('SonarQube SAST Analysis') {
@@ -92,11 +98,6 @@ pipeline {
                         -o "${WORKSPACE}/reports/sonar.json" || true
                 '''
             }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/sonar.json', allowEmptyArchive: true
-                }
-            }
         }
 
         stage('Trivy Filesystem Scan') {
@@ -111,11 +112,6 @@ pipeline {
                         --output "${WORKSPACE}/reports/trivy-fs.json" \
                         "${WORKSPACE}" || true
                 '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/trivy-fs.json', allowEmptyArchive: true
-                }
             }
         }
 
@@ -149,11 +145,6 @@ pipeline {
                         echo "⚠️ Skipping image scan: ${IMAGE_NAME}:${BUILD_NUMBER} was not built due to compilation failure."
                     fi
                 '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/trivy-image.json', allowEmptyArchive: true
-                }
             }
         }
 
@@ -194,7 +185,7 @@ pipeline {
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'reports/security-report.html,reports/combined-findings.json,reports/notification-summary.json,reports/chat-payload.json,reports/dojo-generic.json', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/remediation-bundle.zip', allowEmptyArchive: false
                 }
             }
         }
@@ -249,11 +240,6 @@ pipeline {
                         echo "✅ Engagement note posted."
                     fi
                 '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'reports/dojo-generic.json', allowEmptyArchive: true
-                }
             }
         }
 
@@ -351,6 +337,11 @@ pipeline {
     post {
         always {
             echo "CI/CD Pipeline Execution Finished for ${PROJECT_NAME}-${SERVICE_NAME} build #${BUILD_NUMBER}"
+            // Disk Hygiene: Purge uncompressed scanner dumps from workspace
+            sh '''
+                rm -f reports/gitleaks.json reports/sonar.json reports/trivy*.json reports/dojo-generic.json reports/chat-payload.json reports/email-body.txt reports/combined-findings.json reports/security-report.html reports/ai-fix-prompt.md reports/notification-summary.json
+                echo "🧹 Intermediate reports purged from workspace. Only remediation-bundle.zip retained."
+            '''
         }
         success {
             echo "🎉 Pipeline execution completed successfully."

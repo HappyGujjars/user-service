@@ -186,9 +186,8 @@ def _build_chat_card(
         actions_text = (
             "1. Resolve <b>all Critical</b> findings immediately.<br>"
             "2. Review and resolve <b>all High</b> severity findings.<br>"
-            "3. Upgrade any vulnerable dependencies flagged by Trivy.<br>"
-            "4. Plan remediation for Medium and Low findings.<br>"
-            "5. Re-run the pipeline — deployment will auto-unblock when the Security Gate passes."
+            "3. 🤖 <b>AI Remediation</b>: Download <code>remediation-bundle.zip</code> (contains <code>ai-fix-prompt.md</code>) to auto-fix all vulnerabilities in Cursor/Copilot/Claude.<br>"
+            "4. Re-run the pipeline — deployment will auto-unblock when the Security Gate passes."
         )
     else:
         actions_text = "✅ All configured security gate requirements are satisfied. Deployment is cleared."

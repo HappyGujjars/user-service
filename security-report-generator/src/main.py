@@ -25,6 +25,7 @@ try:
     from .report_generator import generate_html_report
     from .notification_summary import generate_notification_summary
     from .dojo_exporter import export_dojo_generic
+    from .ai_prompt_generator import generate_ai_prompt
 except (ImportError, ValueError):
     from models import ReportMetadata
     from utils.file_reader import (
@@ -38,6 +39,7 @@ except (ImportError, ValueError):
     from report_generator import generate_html_report
     from notification_summary import generate_notification_summary
     from dojo_exporter import export_dojo_generic
+    from ai_prompt_generator import generate_ai_prompt
 
 
 def parse_args():
@@ -136,8 +138,14 @@ def main():
     write_json_file(args.output_json, aggregated_report.to_dict())
     write_json_file(args.output_summary, notification_data)
 
-    # Write DefectDojo aggregated export
     summary_dir = os.path.dirname(os.path.abspath(args.output_summary))
+
+    # Generate and write AI-optimized prompt for LLM consumption
+    ai_prompt_str = generate_ai_prompt(aggregated_report)
+    ai_prompt_file = os.path.join(summary_dir, "ai-fix-prompt.md")
+    write_text_file(ai_prompt_file, ai_prompt_str)
+
+    # Write DefectDojo aggregated export
     dojo_export_path = os.path.join(summary_dir, "dojo-generic.json")
     write_json_file(dojo_export_path, dojo_generic)
 
@@ -147,8 +155,21 @@ def main():
     if "email_body" in notification_data:
         write_text_file(os.path.join(summary_dir, "email-body.txt"), notification_data["email_body"])
 
+    # Create Single Compressed AI Remediation Bundle (ZIP)
+    import zipfile
+    bundle_zip_path = os.path.join(summary_dir, "remediation-bundle.zip")
+    with zipfile.ZipFile(bundle_zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        if os.path.exists(args.output_html):
+            zf.write(args.output_html, arcname="security-report.html")
+        if os.path.exists(ai_prompt_file):
+            zf.write(ai_prompt_file, arcname="ai-fix-prompt.md")
+        if os.path.exists(args.output_json):
+            zf.write(args.output_json, arcname="combined-findings.json")
+
     logger.info(f"Generated unified HTML report at: {args.output_html}")
     logger.info(f"Generated combined JSON report at: {args.output_json}")
+    logger.info(f"Generated AI Fix Prompt at: {ai_prompt_file}")
+    logger.info(f"Generated compressed Remediation Bundle ZIP at: {bundle_zip_path}")
     logger.info(f"Generated DefectDojo Generic export at: {dojo_export_path}")
     logger.info(f"Generated notification summary at: {args.output_summary}")
     logger.info(f"Generated chat payload at: {os.path.join(summary_dir, 'chat-payload.json')}")
