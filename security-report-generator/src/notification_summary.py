@@ -286,9 +286,17 @@ def generate_notification_summary(
         )
 
     commit_short = meta.commit[:12] if meta.commit else "N/A"
-    email_body = f"""{'='*60}
+    deploy_str = "⛔ BLOCKED — resolve Critical/High findings first." if not gate_passed else "✅ CLEARED — deployment approved."
+    heading_str = "Key Findings Requiring Immediate Attention" if findings_text else "No Critical or High findings detected."
+    if not gate_passed:
+        actions_str = "1. Resolve ALL Critical findings immediately.\n2. Review and fix High severity findings.\n3. Upgrade vulnerable dependencies flagged above.\n4. Re-run the pipeline to unblock deployment."
+    else:
+        actions_str = "All security gate requirements satisfied. Deployment cleared."
+    sep = "=" * 60
+
+    email_body = f"""{sep}
 🚨 Security Gate {gate_status} — {meta.project.upper()} / {service_name.capitalize()}
-{'='*60}
+{sep}
 
 Project:      {meta.project}
 Service:      {service_name.capitalize()}
@@ -307,17 +315,17 @@ Security Summary
   ⚪ Low      : {low_count}
   Total Unique: {total_unique}
 
-Deployment:   {'⛔ BLOCKED — resolve Critical/High findings first.' if not gate_passed else '✅ CLEARED — deployment approved.'}
+Deployment:   {deploy_str}
 
 ──────────────────────────────
-{'Key Findings Requiring Immediate Attention' if findings_text else 'No Critical or High findings detected.'}
+{heading_str}
 ──────────────────────────────
 {findings_text}
 ──────────────────────────────
 Required Actions
 ──────────────────────────────
-{'1. Resolve ALL Critical findings immediately.\n2. Review and fix High severity findings.\n3. Upgrade vulnerable dependencies flagged above.\n4. Re-run the pipeline to unblock deployment.' if not gate_passed else 'All security gate requirements satisfied. Deployment cleared.'}
-{'='*60}
+{actions_str}
+{sep}
 """.strip()
 
     # ── Google Chat Cards v2 payload ──────────────────────────────────────────
