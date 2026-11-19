@@ -131,9 +131,17 @@ def main():
     write_json_file(args.output_json, aggregated_report.to_dict())
     write_json_file(args.output_summary, notification_data)
 
+    # Write separate chat payload and email body for pipeline integrations
+    summary_dir = os.path.dirname(os.path.abspath(args.output_summary))
+    if "chat_payload" in notification_data:
+        write_json_file(os.path.join(summary_dir, "chat-payload.json"), notification_data["chat_payload"])
+    if "email_body" in notification_data:
+        write_text_file(os.path.join(summary_dir, "email-body.txt"), notification_data["email_body"])
+
     logger.info(f"Generated unified HTML report at: {args.output_html}")
     logger.info(f"Generated combined JSON report at: {args.output_json}")
     logger.info(f"Generated notification summary at: {args.output_summary}")
+    logger.info(f"Generated chat payload at: {os.path.join(summary_dir, 'chat-payload.json')}")
 
     summary = aggregated_report.summary
     logger.info("=" * 60)

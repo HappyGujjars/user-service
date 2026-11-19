@@ -7,10 +7,11 @@ pipeline {
         IMAGE_NAME       = 'critical-backend'
 
         // Centralized Credentials from Jenkins Credential Store
-        DEFECTDOJO_URL   = credentials('dojourl')
-        DEFECTDOJO_TOKEN = credentials('dojotoken')
-        SONAR_URL        = credentials('sonarurl')
-        SONAR_TOKEN      = credentials('sonartoken')
+        DEFECTDOJO_URL       = credentials('dojourl')
+        DEFECTDOJO_TOKEN     = credentials('dojotoken')
+        SONAR_URL            = credentials('sonarurl')
+        SONAR_TOKEN          = credentials('sonartoken')
+        GOOGLE_CHAT_WEBHOOK  = credentials('googleChatWebhook')
     }
 
     stages {
@@ -193,7 +194,7 @@ pipeline {
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'reports/security-report.html,reports/combined-findings.json,reports/notification-summary.json', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'reports/security-report.html,reports/combined-findings.json,reports/notification-summary.json,reports/chat-payload.json', allowEmptyArchive: true
                 }
             }
         }
@@ -240,6 +241,18 @@ pipeline {
 
                     # 4. Trivy Container Image (if built)
                     upload_to_dojo "${WORKSPACE}/reports/trivy-image.json" "Trivy Scan"
+
+                    # 5. Add Engagement Summary Note to DefectDojo
+                    if [ -f "${WORKSPACE}/reports/notification-summary.json" ]; then
+                        echo "Posting build summary note to DefectDojo engagement..."
+                        CRIT=$(grep -o '"critical_count": *[0-9]*' "${WORKSPACE}/reports/notification-summary.json" | grep -o '[0-9]*' || echo '0')
+                        TOT=$(grep -o '"total_unique": *[0-9]*' "${WORKSPACE}/reports/notification-summary.json" | grep -o '[0-9]*' || echo '0')
+                        NOTE_TEXT="Build #${BUILD_NUMBER} (${BRANCH_NAME:-stage}) Security Gate Evaluated. Critical: ${CRIT}, Total Unique Findings: ${TOT}. Jenkins Report: ${BUILD_URL}artifact/reports/security-report.html"
+                        curl -s -X POST "${DOJO_BASE_URL}/api/v2/engagements/2/notes/" \
+                            -H "Authorization: Token ${DEFECTDOJO_TOKEN}" \
+                            -H "Content-Type: application/json" \
+                            -d "{\"entry\": \"${NOTE_TEXT}\"}" || true
+                    fi
                 '''
             }
         }
@@ -255,6 +268,14 @@ pipeline {
                         cat "${WORKSPACE}/reports/notification-summary.json"
                         echo ""
                         echo "=========================================="
+                    fi
+
+                    # Instant Push to Google Chat Webhook
+                    if [ -n "${GOOGLE_CHAT_WEBHOOK}" ] && [ -f "${WORKSPACE}/reports/chat-payload.json" ]; then
+                        echo "Pushing security alert to Google Chat channel..."
+                        curl -s -X POST -H "Content-Type: application/json" \
+                            -d @"${WORKSPACE}/reports/chat-payload.json" \
+                            "${GOOGLE_CHAT_WEBHOOK}" || echo "⚠️ Warning: Google Chat delivery failed."
                     fi
                 '''
             }
