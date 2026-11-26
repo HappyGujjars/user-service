@@ -12,17 +12,26 @@ export class AppController {
 
   @Get('insecure-hash')
   getHash(@Query('password') password: string): string {
+    if (!password) {
+      return '';
+    }
     return this.appService.hashPasswordInsecure(password);
   }
 
   @Get('exec')
   runCommand(@Query('cmd') cmd: string): string {
+    if (!cmd) {
+      return 'Command missing';
+    }
     this.appService.executeUserCommand(cmd);
-    return 'Command executed';
+    return 'Command executed safely';
   }
 
   @Get('eval')
   runEval(@Query('code') code: string): any {
+    if (!code) {
+      return null;
+    }
     return this.appService.evaluateExpression(code);
   }
 }

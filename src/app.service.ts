@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 
 @Injectable()
 export class AppService {
@@ -8,25 +8,37 @@ export class AppService {
     return 'Hello World!';
   }
 
-  // 1. Security Vulnerability: Insecure Hashing (MD5) - CWE-327 / OWASP A2
+  // 1. Fixed: Secure Hashing with SHA-256
   hashPasswordInsecure(password: string): string {
-    return crypto.createHash('md5').update(password).digest('hex');
+    return crypto.createHash('sha256').update(password).digest('hex');
   }
 
-  // 2. Security Vulnerability: Command Injection - CWE-78 / OWASP A1
+  // 2. Fixed: Prevent Command Injection using execFile with arguments array and sanitization
   executeUserCommand(userCommand: string): void {
-    exec(`ping -c 1 ${userCommand}`, (error, stdout) => {
+    const sanitizedHost = userCommand.replace(/[^a-zA-Z0-9.-]/g, '');
+    if (!sanitizedHost) {
+      return;
+    }
+    execFile('ping', ['-c', '1', sanitizedHost], (error, stdout) => {
+      if (error) {
+        console.error(error.message);
+        return;
+      }
       console.log(stdout);
     });
   }
 
-  // 3. Security Vulnerability: Code Injection (eval) - CWE-95
+  // 3. Fixed: Eliminate eval() code injection; safely evaluate structured JSON
   evaluateExpression(input: string): any {
-    return eval(input);
+    try {
+      return JSON.parse(input);
+    } catch {
+      return null;
+    }
   }
 
-  // 4. Security Hotspot: Insecure Pseudo-Random Number Generator (CWE-330 / S2245)
+  // 4. Fixed: Cryptographically secure random integer generation
   generateInsecureToken(): number {
-    return Math.random();
+    return crypto.randomInt(0, Number.MAX_SAFE_INTEGER);
   }
 }

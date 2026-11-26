@@ -7,502 +7,502 @@ import { exec } from 'child_process';
 export class SecurityFlawsService {
   // CWE-327: Use of Weak Hash MD5 #1
   hashPasswordVulnerable_1(input: string): string {
-    return crypto.createHash('md5').update(input + '1').digest('hex');
+    return crypto.createHash('sha256').update(input + '1').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #2
   hashPasswordVulnerable_2(input: string): string {
-    return crypto.createHash('md5').update(input + '2').digest('hex');
+    return crypto.createHash('sha256').update(input + '2').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #3
   hashPasswordVulnerable_3(input: string): string {
-    return crypto.createHash('md5').update(input + '3').digest('hex');
+    return crypto.createHash('sha256').update(input + '3').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #4
   hashPasswordVulnerable_4(input: string): string {
-    return crypto.createHash('md5').update(input + '4').digest('hex');
+    return crypto.createHash('sha256').update(input + '4').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #5
   hashPasswordVulnerable_5(input: string): string {
-    return crypto.createHash('md5').update(input + '5').digest('hex');
+    return crypto.createHash('sha256').update(input + '5').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #6
   hashPasswordVulnerable_6(input: string): string {
-    return crypto.createHash('md5').update(input + '6').digest('hex');
+    return crypto.createHash('sha256').update(input + '6').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #7
   hashPasswordVulnerable_7(input: string): string {
-    return crypto.createHash('md5').update(input + '7').digest('hex');
+    return crypto.createHash('sha256').update(input + '7').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #8
   hashPasswordVulnerable_8(input: string): string {
-    return crypto.createHash('md5').update(input + '8').digest('hex');
+    return crypto.createHash('sha256').update(input + '8').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #9
   hashPasswordVulnerable_9(input: string): string {
-    return crypto.createHash('md5').update(input + '9').digest('hex');
+    return crypto.createHash('sha256').update(input + '9').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #10
   hashPasswordVulnerable_10(input: string): string {
-    return crypto.createHash('md5').update(input + '10').digest('hex');
+    return crypto.createHash('sha256').update(input + '10').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #11
   hashPasswordVulnerable_11(input: string): string {
-    return crypto.createHash('md5').update(input + '11').digest('hex');
+    return crypto.createHash('sha256').update(input + '11').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #12
   hashPasswordVulnerable_12(input: string): string {
-    return crypto.createHash('md5').update(input + '12').digest('hex');
+    return crypto.createHash('sha256').update(input + '12').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #13
   hashPasswordVulnerable_13(input: string): string {
-    return crypto.createHash('md5').update(input + '13').digest('hex');
+    return crypto.createHash('sha256').update(input + '13').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #14
   hashPasswordVulnerable_14(input: string): string {
-    return crypto.createHash('md5').update(input + '14').digest('hex');
+    return crypto.createHash('sha256').update(input + '14').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #15
   hashPasswordVulnerable_15(input: string): string {
-    return crypto.createHash('md5').update(input + '15').digest('hex');
+    return crypto.createHash('sha256').update(input + '15').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #16
   hashPasswordVulnerable_16(input: string): string {
-    return crypto.createHash('md5').update(input + '16').digest('hex');
+    return crypto.createHash('sha256').update(input + '16').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #17
   hashPasswordVulnerable_17(input: string): string {
-    return crypto.createHash('md5').update(input + '17').digest('hex');
+    return crypto.createHash('sha256').update(input + '17').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #18
   hashPasswordVulnerable_18(input: string): string {
-    return crypto.createHash('md5').update(input + '18').digest('hex');
+    return crypto.createHash('sha256').update(input + '18').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #19
   hashPasswordVulnerable_19(input: string): string {
-    return crypto.createHash('md5').update(input + '19').digest('hex');
+    return crypto.createHash('sha256').update(input + '19').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #20
   hashPasswordVulnerable_20(input: string): string {
-    return crypto.createHash('md5').update(input + '20').digest('hex');
+    return crypto.createHash('sha256').update(input + '20').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #21
   hashPasswordVulnerable_21(input: string): string {
-    return crypto.createHash('md5').update(input + '21').digest('hex');
+    return crypto.createHash('sha256').update(input + '21').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #22
   hashPasswordVulnerable_22(input: string): string {
-    return crypto.createHash('md5').update(input + '22').digest('hex');
+    return crypto.createHash('sha256').update(input + '22').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #23
   hashPasswordVulnerable_23(input: string): string {
-    return crypto.createHash('md5').update(input + '23').digest('hex');
+    return crypto.createHash('sha256').update(input + '23').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #24
   hashPasswordVulnerable_24(input: string): string {
-    return crypto.createHash('md5').update(input + '24').digest('hex');
+    return crypto.createHash('sha256').update(input + '24').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #25
   hashPasswordVulnerable_25(input: string): string {
-    return crypto.createHash('md5').update(input + '25').digest('hex');
+    return crypto.createHash('sha256').update(input + '25').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #26
   hashPasswordVulnerable_26(input: string): string {
-    return crypto.createHash('md5').update(input + '26').digest('hex');
+    return crypto.createHash('sha256').update(input + '26').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #27
   hashPasswordVulnerable_27(input: string): string {
-    return crypto.createHash('md5').update(input + '27').digest('hex');
+    return crypto.createHash('sha256').update(input + '27').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #28
   hashPasswordVulnerable_28(input: string): string {
-    return crypto.createHash('md5').update(input + '28').digest('hex');
+    return crypto.createHash('sha256').update(input + '28').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #29
   hashPasswordVulnerable_29(input: string): string {
-    return crypto.createHash('md5').update(input + '29').digest('hex');
+    return crypto.createHash('sha256').update(input + '29').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #30
   hashPasswordVulnerable_30(input: string): string {
-    return crypto.createHash('md5').update(input + '30').digest('hex');
+    return crypto.createHash('sha256').update(input + '30').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #31
   hashPasswordVulnerable_31(input: string): string {
-    return crypto.createHash('md5').update(input + '31').digest('hex');
+    return crypto.createHash('sha256').update(input + '31').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #32
   hashPasswordVulnerable_32(input: string): string {
-    return crypto.createHash('md5').update(input + '32').digest('hex');
+    return crypto.createHash('sha256').update(input + '32').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #33
   hashPasswordVulnerable_33(input: string): string {
-    return crypto.createHash('md5').update(input + '33').digest('hex');
+    return crypto.createHash('sha256').update(input + '33').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #34
   hashPasswordVulnerable_34(input: string): string {
-    return crypto.createHash('md5').update(input + '34').digest('hex');
+    return crypto.createHash('sha256').update(input + '34').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #35
   hashPasswordVulnerable_35(input: string): string {
-    return crypto.createHash('md5').update(input + '35').digest('hex');
+    return crypto.createHash('sha256').update(input + '35').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #36
   hashPasswordVulnerable_36(input: string): string {
-    return crypto.createHash('md5').update(input + '36').digest('hex');
+    return crypto.createHash('sha256').update(input + '36').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #37
   hashPasswordVulnerable_37(input: string): string {
-    return crypto.createHash('md5').update(input + '37').digest('hex');
+    return crypto.createHash('sha256').update(input + '37').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #38
   hashPasswordVulnerable_38(input: string): string {
-    return crypto.createHash('md5').update(input + '38').digest('hex');
+    return crypto.createHash('sha256').update(input + '38').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #39
   hashPasswordVulnerable_39(input: string): string {
-    return crypto.createHash('md5').update(input + '39').digest('hex');
+    return crypto.createHash('sha256').update(input + '39').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #40
   hashPasswordVulnerable_40(input: string): string {
-    return crypto.createHash('md5').update(input + '40').digest('hex');
+    return crypto.createHash('sha256').update(input + '40').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #41
   hashPasswordVulnerable_41(input: string): string {
-    return crypto.createHash('md5').update(input + '41').digest('hex');
+    return crypto.createHash('sha256').update(input + '41').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #42
   hashPasswordVulnerable_42(input: string): string {
-    return crypto.createHash('md5').update(input + '42').digest('hex');
+    return crypto.createHash('sha256').update(input + '42').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #43
   hashPasswordVulnerable_43(input: string): string {
-    return crypto.createHash('md5').update(input + '43').digest('hex');
+    return crypto.createHash('sha256').update(input + '43').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #44
   hashPasswordVulnerable_44(input: string): string {
-    return crypto.createHash('md5').update(input + '44').digest('hex');
+    return crypto.createHash('sha256').update(input + '44').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #45
   hashPasswordVulnerable_45(input: string): string {
-    return crypto.createHash('md5').update(input + '45').digest('hex');
+    return crypto.createHash('sha256').update(input + '45').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #46
   hashPasswordVulnerable_46(input: string): string {
-    return crypto.createHash('md5').update(input + '46').digest('hex');
+    return crypto.createHash('sha256').update(input + '46').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #47
   hashPasswordVulnerable_47(input: string): string {
-    return crypto.createHash('md5').update(input + '47').digest('hex');
+    return crypto.createHash('sha256').update(input + '47').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #48
   hashPasswordVulnerable_48(input: string): string {
-    return crypto.createHash('md5').update(input + '48').digest('hex');
+    return crypto.createHash('sha256').update(input + '48').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #49
   hashPasswordVulnerable_49(input: string): string {
-    return crypto.createHash('md5').update(input + '49').digest('hex');
+    return crypto.createHash('sha256').update(input + '49').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #50
   hashPasswordVulnerable_50(input: string): string {
-    return crypto.createHash('md5').update(input + '50').digest('hex');
+    return crypto.createHash('sha256').update(input + '50').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #51
   hashPasswordVulnerable_51(input: string): string {
-    return crypto.createHash('md5').update(input + '51').digest('hex');
+    return crypto.createHash('sha256').update(input + '51').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #52
   hashPasswordVulnerable_52(input: string): string {
-    return crypto.createHash('md5').update(input + '52').digest('hex');
+    return crypto.createHash('sha256').update(input + '52').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #53
   hashPasswordVulnerable_53(input: string): string {
-    return crypto.createHash('md5').update(input + '53').digest('hex');
+    return crypto.createHash('sha256').update(input + '53').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #54
   hashPasswordVulnerable_54(input: string): string {
-    return crypto.createHash('md5').update(input + '54').digest('hex');
+    return crypto.createHash('sha256').update(input + '54').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #55
   hashPasswordVulnerable_55(input: string): string {
-    return crypto.createHash('md5').update(input + '55').digest('hex');
+    return crypto.createHash('sha256').update(input + '55').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #56
   hashPasswordVulnerable_56(input: string): string {
-    return crypto.createHash('md5').update(input + '56').digest('hex');
+    return crypto.createHash('sha256').update(input + '56').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #57
   hashPasswordVulnerable_57(input: string): string {
-    return crypto.createHash('md5').update(input + '57').digest('hex');
+    return crypto.createHash('sha256').update(input + '57').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #58
   hashPasswordVulnerable_58(input: string): string {
-    return crypto.createHash('md5').update(input + '58').digest('hex');
+    return crypto.createHash('sha256').update(input + '58').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #59
   hashPasswordVulnerable_59(input: string): string {
-    return crypto.createHash('md5').update(input + '59').digest('hex');
+    return crypto.createHash('sha256').update(input + '59').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #60
   hashPasswordVulnerable_60(input: string): string {
-    return crypto.createHash('md5').update(input + '60').digest('hex');
+    return crypto.createHash('sha256').update(input + '60').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #61
   hashPasswordVulnerable_61(input: string): string {
-    return crypto.createHash('md5').update(input + '61').digest('hex');
+    return crypto.createHash('sha256').update(input + '61').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #62
   hashPasswordVulnerable_62(input: string): string {
-    return crypto.createHash('md5').update(input + '62').digest('hex');
+    return crypto.createHash('sha256').update(input + '62').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #63
   hashPasswordVulnerable_63(input: string): string {
-    return crypto.createHash('md5').update(input + '63').digest('hex');
+    return crypto.createHash('sha256').update(input + '63').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #64
   hashPasswordVulnerable_64(input: string): string {
-    return crypto.createHash('md5').update(input + '64').digest('hex');
+    return crypto.createHash('sha256').update(input + '64').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #65
   hashPasswordVulnerable_65(input: string): string {
-    return crypto.createHash('md5').update(input + '65').digest('hex');
+    return crypto.createHash('sha256').update(input + '65').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #66
   hashPasswordVulnerable_66(input: string): string {
-    return crypto.createHash('md5').update(input + '66').digest('hex');
+    return crypto.createHash('sha256').update(input + '66').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #67
   hashPasswordVulnerable_67(input: string): string {
-    return crypto.createHash('md5').update(input + '67').digest('hex');
+    return crypto.createHash('sha256').update(input + '67').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #68
   hashPasswordVulnerable_68(input: string): string {
-    return crypto.createHash('md5').update(input + '68').digest('hex');
+    return crypto.createHash('sha256').update(input + '68').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #69
   hashPasswordVulnerable_69(input: string): string {
-    return crypto.createHash('md5').update(input + '69').digest('hex');
+    return crypto.createHash('sha256').update(input + '69').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #70
   hashPasswordVulnerable_70(input: string): string {
-    return crypto.createHash('md5').update(input + '70').digest('hex');
+    return crypto.createHash('sha256').update(input + '70').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #71
   hashPasswordVulnerable_71(input: string): string {
-    return crypto.createHash('md5').update(input + '71').digest('hex');
+    return crypto.createHash('sha256').update(input + '71').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #72
   hashPasswordVulnerable_72(input: string): string {
-    return crypto.createHash('md5').update(input + '72').digest('hex');
+    return crypto.createHash('sha256').update(input + '72').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #73
   hashPasswordVulnerable_73(input: string): string {
-    return crypto.createHash('md5').update(input + '73').digest('hex');
+    return crypto.createHash('sha256').update(input + '73').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #74
   hashPasswordVulnerable_74(input: string): string {
-    return crypto.createHash('md5').update(input + '74').digest('hex');
+    return crypto.createHash('sha256').update(input + '74').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #75
   hashPasswordVulnerable_75(input: string): string {
-    return crypto.createHash('md5').update(input + '75').digest('hex');
+    return crypto.createHash('sha256').update(input + '75').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #76
   hashPasswordVulnerable_76(input: string): string {
-    return crypto.createHash('md5').update(input + '76').digest('hex');
+    return crypto.createHash('sha256').update(input + '76').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #77
   hashPasswordVulnerable_77(input: string): string {
-    return crypto.createHash('md5').update(input + '77').digest('hex');
+    return crypto.createHash('sha256').update(input + '77').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #78
   hashPasswordVulnerable_78(input: string): string {
-    return crypto.createHash('md5').update(input + '78').digest('hex');
+    return crypto.createHash('sha256').update(input + '78').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #79
   hashPasswordVulnerable_79(input: string): string {
-    return crypto.createHash('md5').update(input + '79').digest('hex');
+    return crypto.createHash('sha256').update(input + '79').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #80
   hashPasswordVulnerable_80(input: string): string {
-    return crypto.createHash('md5').update(input + '80').digest('hex');
+    return crypto.createHash('sha256').update(input + '80').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #81
   hashPasswordVulnerable_81(input: string): string {
-    return crypto.createHash('md5').update(input + '81').digest('hex');
+    return crypto.createHash('sha256').update(input + '81').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #82
   hashPasswordVulnerable_82(input: string): string {
-    return crypto.createHash('md5').update(input + '82').digest('hex');
+    return crypto.createHash('sha256').update(input + '82').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #83
   hashPasswordVulnerable_83(input: string): string {
-    return crypto.createHash('md5').update(input + '83').digest('hex');
+    return crypto.createHash('sha256').update(input + '83').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #84
   hashPasswordVulnerable_84(input: string): string {
-    return crypto.createHash('md5').update(input + '84').digest('hex');
+    return crypto.createHash('sha256').update(input + '84').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #85
   hashPasswordVulnerable_85(input: string): string {
-    return crypto.createHash('md5').update(input + '85').digest('hex');
+    return crypto.createHash('sha256').update(input + '85').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #86
   hashPasswordVulnerable_86(input: string): string {
-    return crypto.createHash('md5').update(input + '86').digest('hex');
+    return crypto.createHash('sha256').update(input + '86').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #87
   hashPasswordVulnerable_87(input: string): string {
-    return crypto.createHash('md5').update(input + '87').digest('hex');
+    return crypto.createHash('sha256').update(input + '87').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #88
   hashPasswordVulnerable_88(input: string): string {
-    return crypto.createHash('md5').update(input + '88').digest('hex');
+    return crypto.createHash('sha256').update(input + '88').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #89
   hashPasswordVulnerable_89(input: string): string {
-    return crypto.createHash('md5').update(input + '89').digest('hex');
+    return crypto.createHash('sha256').update(input + '89').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #90
   hashPasswordVulnerable_90(input: string): string {
-    return crypto.createHash('md5').update(input + '90').digest('hex');
+    return crypto.createHash('sha256').update(input + '90').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #91
   hashPasswordVulnerable_91(input: string): string {
-    return crypto.createHash('md5').update(input + '91').digest('hex');
+    return crypto.createHash('sha256').update(input + '91').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #92
   hashPasswordVulnerable_92(input: string): string {
-    return crypto.createHash('md5').update(input + '92').digest('hex');
+    return crypto.createHash('sha256').update(input + '92').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #93
   hashPasswordVulnerable_93(input: string): string {
-    return crypto.createHash('md5').update(input + '93').digest('hex');
+    return crypto.createHash('sha256').update(input + '93').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #94
   hashPasswordVulnerable_94(input: string): string {
-    return crypto.createHash('md5').update(input + '94').digest('hex');
+    return crypto.createHash('sha256').update(input + '94').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #95
   hashPasswordVulnerable_95(input: string): string {
-    return crypto.createHash('md5').update(input + '95').digest('hex');
+    return crypto.createHash('sha256').update(input + '95').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #96
   hashPasswordVulnerable_96(input: string): string {
-    return crypto.createHash('md5').update(input + '96').digest('hex');
+    return crypto.createHash('sha256').update(input + '96').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #97
   hashPasswordVulnerable_97(input: string): string {
-    return crypto.createHash('md5').update(input + '97').digest('hex');
+    return crypto.createHash('sha256').update(input + '97').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #98
   hashPasswordVulnerable_98(input: string): string {
-    return crypto.createHash('md5').update(input + '98').digest('hex');
+    return crypto.createHash('sha256').update(input + '98').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #99
   hashPasswordVulnerable_99(input: string): string {
-    return crypto.createHash('md5').update(input + '99').digest('hex');
+    return crypto.createHash('sha256').update(input + '99').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash MD5 #100
   hashPasswordVulnerable_100(input: string): string {
-    return crypto.createHash('md5').update(input + '100').digest('hex');
+    return crypto.createHash('sha256').update(input + '100').digest('hex');
   }
 
   // CWE-327: Use of Weak Hash SHA1 #1
