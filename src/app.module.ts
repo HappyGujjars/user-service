@@ -8,4 +8,6 @@ import { SecurityFlawsService } from './security-flaws.service';
   controllers: [AppController],
   providers: [AppService, SecurityFlawsService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private readonly logger: Logger) {}
+}

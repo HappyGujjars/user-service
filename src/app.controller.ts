@@ -15,13 +15,14 @@ export class AppController {
     if (!password) {
       return '';
     }
-    return this.appService.hashPasswordInsecure(password);
+    const salt = crypto.randomBytes(16);
+    return scryptSync(password, salt.toString('hex'), 32).toString('hex');
   }
 
   @Get('exec')
   runCommand(@Query('cmd') cmd: string): string {
-    if (!cmd) {
-      return 'Command missing';
+    if (!cmd || !ALLOWED_COMMANDS.includes(cmd)) {
+      return 'Invalid command';
     }
     this.appService.executeUserCommand(cmd);
     return 'Command executed safely';
@@ -32,6 +33,12 @@ export class AppController {
     if (!code) {
       return null;
     }
-    return this.appService.evaluateExpression(code);
+    const context = { console };
+    vm.createContext(context);
+    try {
+      return vm.runInContext(code, context);
+    } catch (e) {
+      return `Error: ${e.message}`;
+    }
   }
 }
