@@ -125,7 +125,7 @@ pipeline {
                     archiveArtifacts artifacts: 'ai-review.md, ai-review-critical.txt', allowEmptyArchive: true
                     script {
                         try {
-                            withCredentials([string(credentialsId: 'git-review-token', variable: 'GIT_TOKEN')]) {
+                            withCredentials([usernamePassword(credentialsId: 'devsecops-Github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
                                 sh '''
                                     if [ -n "${CHANGE_ID:-}" ] && [ -f ai-review.md ]; then
                                         echo "Posting AI Review comment to PR #${CHANGE_ID}..."
@@ -138,10 +138,65 @@ pipeline {
                                     fi
                                 '''
                             }
-                        } catch (Exception e) {
-                            echo "ℹ️ Note: git-review-token credential not found or PR comment skipped: ${e.message}"
+                        } catch (Exception e1) {
+                            try {
+                                withCredentials([string(credentialsId: 'devsecops-Github-token', variable: 'GIT_TOKEN')]) {
+                                    sh '''
+                                        if [ -n "${CHANGE_ID:-}" ] && [ -f ai-review.md ]; then
+                                            echo "Posting AI Review comment to PR #${CHANGE_ID}..."
+                                            BODY=$(head -c 60000 ai-review.md | jq -Rs '{body: .}')
+                                            curl -s -o /dev/null -X POST \
+                                                -H "Authorization: Bearer $GIT_TOKEN" \
+                                                -H "Accept: application/vnd.github+json" \
+                                                "https://api.github.com/repos/HappyGujjars/user-service/issues/${CHANGE_ID}/comments" \
+                                                -d "$BODY" || echo "⚠️ Warning: Failed to post PR comment"
+                                        fi
+                                    '''
+                                }
+                            } catch (Exception e2) {
+                                echo "ℹ️ Note: devsecops-Github-token not resolved for PR comment: ${e2.message}"
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        stage('AI Auto-Fix & PR') {
+            when {
+                anyOf {
+                    changeRequest()
+                    branch 'stage'
+                }
+            }
+            options { timeout(time: 15, unit: 'MINUTES') }
+            environment {
+                OLLAMA_URL         = 'http://192.168.10.44:11434'
+                AI_REVIEW_MODEL    = 'nestjs-dev'
+                GITHUB_REPO        = 'HappyGujjars/user-service'
+                TARGET_BRANCH      = env.BRANCH_NAME ?: 'stage'
+            }
+            steps {
+                echo "🛠️ Initiating AI Auto-Fix & Pull Request Generation..."
+                script {
+                    try {
+                        withCredentials([usernamePassword(credentialsId: 'devsecops-Github-token', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+                            sh './scripts/ai_fix_and_pr.sh'
+                        }
+                    } catch (Exception e1) {
+                        try {
+                            withCredentials([string(credentialsId: 'devsecops-Github-token', variable: 'GIT_TOKEN')]) {
+                                sh './scripts/ai_fix_and_pr.sh'
+                            }
+                        } catch (Exception e2) {
+                            echo "⚠️ Could not bind devsecops-Github-token: ${e2.message}"
+                        }
+                    }
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'ai-pr-url.txt', allowEmptyArchive: true
                 }
             }
         }
