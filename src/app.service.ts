@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { execFile } from 'child_process';
 
 @Injectable()
@@ -8,12 +8,12 @@ export class AppService {
     return 'Hello World!';
   }
 
-  // 1. Fixed: Secure Hashing with SHA-256
-  hashPasswordInsecure(password: string): string {
-    return crypto.createHash('sha256').update(password).digest('hex');
+  // Fixed: Secure Hashing with SHA-256
+  hashPasswordInsecure(password: string): Promise<string> {
+    return bcrypt.hash(password, 10);
   }
 
-  // 2. Fixed: Prevent Command Injection using execFile with arguments array and sanitization
+  // Fixed: Prevent Command Injection using execFile with arguments array and sanitization
   executeUserCommand(userCommand: string): void {
     const sanitizedHost = userCommand.replace(/[^a-zA-Z0-9.-]/g, '');
     if (!sanitizedHost) {
@@ -28,7 +28,7 @@ export class AppService {
     });
   }
 
-  // 3. Fixed: Eliminate eval() code injection; safely evaluate structured JSON
+  // Fixed: Eliminate eval() code injection; safely evaluate structured JSON
   evaluateExpression(input: string): any {
     try {
       return JSON.parse(input);
@@ -37,7 +37,7 @@ export class AppService {
     }
   }
 
-  // 4. Fixed: Cryptographically secure random integer generation
+  // Fixed: Cryptographically secure random integer generation
   generateInsecureToken(): number {
     return crypto.randomInt(0, Number.MAX_SAFE_INTEGER);
   }
