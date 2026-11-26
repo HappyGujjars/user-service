@@ -5,7 +5,7 @@ set -uo pipefail
 OLLAMA_URL="${OLLAMA_URL:-http://192.168.10.44:11434}"
 MODEL="${AI_REVIEW_MODEL:-nestjs-dev}"
 GITHUB_REPO="${GITHUB_REPO:-HappyGujjars/user-service}"
-TARGET_BRANCH="${TARGET_BRANCH:-stage}"
+TARGET_BRANCH="${TARGET_BRANCH:-${BRANCH_NAME:-stage}}"
 BUILD_NUM="${BUILD_NUMBER:-$(date +%s)}"
 GIT_TOKEN="${GIT_TOKEN:-}"
 TIMEOUT="${AI_FIX_TIMEOUT:-300}"

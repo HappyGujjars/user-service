@@ -174,7 +174,7 @@ pipeline {
                 OLLAMA_URL         = 'http://192.168.10.44:11434'
                 AI_REVIEW_MODEL    = 'nestjs-dev'
                 GITHUB_REPO        = 'HappyGujjars/user-service'
-                TARGET_BRANCH      = env.BRANCH_NAME ?: 'stage'
+                TARGET_BRANCH      = 'stage'
             }
             steps {
                 echo "🛠️ Initiating AI Auto-Fix & Pull Request Generation..."
