@@ -112,6 +112,7 @@ pipeline {
                 OLLAMA_URL         = 'http://192.168.10.44:11434'
                 AI_REVIEW_MODEL    = 'nestjs-dev'
                 AI_REVIEW_BLOCKING = 'false'
+                AI_REVIEW_ALL      = 'true'
             }
             steps {
                 echo "🤖 Running Local AI Review (nestjs-dev on ${OLLAMA_URL})..."
