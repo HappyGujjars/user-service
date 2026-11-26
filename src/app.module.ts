@@ -8,4 +8,12 @@ import { SecurityFlawsService } from './security-flaws.service';
   controllers: [AppController],
   providers: [AppService, SecurityFlawsService],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private readonly logger: Logger) {}
+
+  @Get()
+  getRootRoute() {
+    this.logger.log('GET /', 'TrafficLight');
+    return { message: 'Hello World!' };
+  }
+}
