@@ -84,46 +84,79 @@ for FILE in "${FILES_TO_FIX[@]}"; do
   [ -f "$FILE" ] || continue
   echo "🔧 AI is generating fix for: ${FILE}..."
 
-  ORIGINAL_CONTENT=$(cat "$FILE")
-  
-  # File specific review extract
-  FILE_REVIEW=$(awk "/## \`$(echo "$FILE" | sed 's/\//\\\//g')\`/{flag=1;next}/## \`/{flag=0}flag" "$REVIEW_FILE" 2>/dev/null || echo "")
+  # Stream file and review directly via python3 to avoid bash ARG_MAX "Argument list too long"
+  FIX_STATUS=$(python3 - <<PYEOF
+import json, urllib.request, sys, re, os
 
-  REQUEST=$(jq -n \
-    --arg model "$MODEL" \
-    --arg sys "$SYSTEM_FIX_PROMPT" \
-    --arg user "File: ${FILE}
-Findings to fix:
-${FILE_REVIEW}
+file_path = "${FILE}"
+review_file = "${REVIEW_FILE}"
+ollama_url = "${OLLAMA_URL}"
+model = "${MODEL}"
+timeout = int("${TIMEOUT}")
+system_prompt = """${SYSTEM_FIX_PROMPT}"""
 
-Current Code:
-${ORIGINAL_CONTENT}" '{
-      model: $model,
-      stream: false,
-      options: { temperature: 0.1, num_ctx: 8192 },
-      messages: [
-        { role: "system", content: $sys },
-        { role: "user", content: $user }
-      ]
-    }')
+try:
+    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        code = f.read()
 
-  RESPONSE=$(curl -s --max-time "$TIMEOUT" "${OLLAMA_URL}/api/chat" -d "$REQUEST" 2>/dev/null \
-    | jq -r '.message.content // empty' 2>/dev/null || true)
+    # Extract review findings for this specific file
+    file_review = ""
+    if os.path.exists(review_file):
+        with open(review_file, "r", encoding="utf-8", errors="ignore") as f:
+            review_lines = f.readlines()
+        collect = False
+        for line in review_lines:
+            if line.startswith(f"## \`{file_path}\`"):
+                collect = True
+                continue
+            elif line.startswith("## \`"):
+                collect = False
+            if collect:
+                file_review += line
 
-  if [ -n "$RESPONSE" ]; then
-    # Strip any accidental ``` markdown fences if model generated them
-    CLEANED_CODE=$(echo "$RESPONSE" | sed -E 's/^```(typescript|ts|javascript|js)?//g' | sed -E 's/^```$//g')
-    
-    # Basic sanity check: ensure file is not empty and has minimum content
-    if [ ${#CLEANED_CODE} -gt 50 ]; then
-      echo "$CLEANED_CODE" > "$FILE"
-      MODIFIED_FILES+=("$FILE")
-      echo "✅ Fix applied to ${FILE}"
-    else
-      echo "⚠️ Fix for ${FILE} was too small or empty. Skipped."
-    fi
+    prompt = f"File: {file_path}\nFindings to fix:\n{file_review}\n\nCurrent Code:\n{code}"
+
+    payload = {
+        "model": model,
+        "stream": False,
+        "options": {"temperature": 0.1, "num_ctx": 32768, "num_predict": 16384},
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    req = urllib.request.Request(
+        f"{ollama_url}/api/chat",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        res = json.loads(resp.read().decode("utf-8"))
+        content = res.get("message", {}).get("content", "")
+        # Strip markdown fences
+        content = re.sub(r'^```(?:typescript|ts|javascript|js)?\n', '', content.strip())
+        content = re.sub(r'\n```$', '', content.strip())
+        
+        if len(content) > 50:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content + "\n")
+            print("SUCCESS")
+        else:
+            print("TOO_SMALL")
+except Exception as e:
+    sys.stderr.write(f"Error fixing {file_path}: {e}\n")
+    print("FAILED")
+PYEOF
+  )
+
+  if [ "$FIX_STATUS" = "SUCCESS" ]; then
+    MODIFIED_FILES+=("$FILE")
+    echo "✅ Fix applied to ${FILE}"
+  elif [ "$FIX_STATUS" = "TOO_SMALL" ]; then
+    echo "⚠️ Fix for ${FILE} was too small or empty. Skipped."
   else
-    echo "⚠️ No response from model for ${FILE}."
+    echo "⚠️ No valid fix generated for ${FILE}."
   fi
 done
 
