@@ -100,6 +100,51 @@ pipeline {
             }
         }
 
+        stage('AI Review') {
+            when {
+                anyOf {
+                    changeRequest()
+                    branch 'stage'
+                }
+            }
+            options { timeout(time: 20, unit: 'MINUTES') }
+            environment {
+                OLLAMA_URL         = 'http://192.168.10.44:11434'
+                AI_REVIEW_MODEL    = 'nestjs-dev'
+                AI_REVIEW_BLOCKING = 'false'
+            }
+            steps {
+                echo "🤖 Running Local AI Review (nestjs-dev on ${OLLAMA_URL})..."
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    sh './scripts/ai_review.sh'
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'ai-review.md, ai-review-critical.txt', allowEmptyArchive: true
+                    script {
+                        try {
+                            withCredentials([string(credentialsId: 'git-review-token', variable: 'GIT_TOKEN')]) {
+                                sh '''
+                                    if [ -n "${CHANGE_ID:-}" ] && [ -f ai-review.md ]; then
+                                        echo "Posting AI Review comment to PR #${CHANGE_ID}..."
+                                        BODY=$(head -c 60000 ai-review.md | jq -Rs '{body: .}')
+                                        curl -s -o /dev/null -X POST \
+                                            -H "Authorization: Bearer $GIT_TOKEN" \
+                                            -H "Accept: application/vnd.github+json" \
+                                            "https://api.github.com/repos/HappyGujjars/user-service/issues/${CHANGE_ID}/comments" \
+                                            -d "$BODY" || echo "⚠️ Warning: Failed to post PR comment"
+                                    fi
+                                '''
+                            }
+                        } catch (Exception e) {
+                            echo "ℹ️ Note: git-review-token credential not found or PR comment skipped: ${e.message}"
+                        }
+                    }
+                }
+            }
+        }
+
         stage('Trivy Filesystem Scan') {
             steps {
                 echo "Scanning project filesystem and dependencies with Trivy..."
