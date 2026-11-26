@@ -10,28 +10,32 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('insecure-hash')
+  @Get('hash')
   getHash(@Query('password') password: string): string {
     if (!password) {
       return '';
     }
-    return this.appService.hashPasswordInsecure(password);
+    return this.appService.hashPasswordSecure(password);
   }
 
-  @Get('exec')
-  runCommand(@Query('cmd') cmd: string): string {
-    if (!cmd) {
-      return 'Command missing';
+  @Get('exec-safe')
+  runCommandSafe(@Query('cmd') cmd: string): string {
+    if (!cmd || !isValidCommand(cmd)) {
+      return 'Invalid command';
     }
     this.appService.executeUserCommand(cmd);
     return 'Command executed safely';
   }
 
-  @Get('eval')
-  runEval(@Query('code') code: string): any {
+  @Get('eval-safe')
+  runEvalSafe(@Query('code') code: string): any {
     if (!code) {
       return null;
     }
-    return this.appService.evaluateExpression(code);
+    try {
+      return this.appService.evaluateExpression(code, { sandboxed: true });
+    } catch (error) {
+      return 'Evaluation failed';
+    }
   }
 }
